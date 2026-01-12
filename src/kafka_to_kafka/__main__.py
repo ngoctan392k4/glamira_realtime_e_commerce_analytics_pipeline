@@ -5,17 +5,9 @@ import logging
 #
 # Initialize logging config
 #
-config = load_config()
-log_cf = config.get("LOGGING", {})
-
 logging.basicConfig(
-    level=getattr(logging, log_cf.get("level","INFO").upper(), logging.INFO),
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[
-        logging.FileHandler(log_cf["log_file"], encoding='utf-8'),
-        logging.StreamHandler() if log_cf.get("to_console", False) else logging.NullHandler()
-    ]
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
 if __name__ == "__main__":
