@@ -15,9 +15,9 @@
     - [Step 3: Install Postgresql](#step-3-install-postgresql)
     - [Step 4: Initialize the Database](#step-4-initialize-the-database)
     - [Step 5: Install dependencies](#step-5-install-dependencies)
-  - [Step 6: Initialize .env file from the root folder](#step-6-initialize-env-file-from-the-root-folder)
-  - [Step 7: Initialize logs folder from the root folder](#step-7-initialize-logs-folder-from-the-root-folder)
-  - [Step 8: Initialize config file for kafka streaming](#step-8-initialize-config-file-for-kafka-streaming)
+    - [Step 6: Initialize .env file from the root folder](#step-6-initialize-env-file-from-the-root-folder)
+    - [Step 7: Initialize logs folder from the root folder](#step-7-initialize-logs-folder-from-the-root-folder)
+    - [Step 8: Initialize config file for kafka streaming](#step-8-initialize-config-file-for-kafka-streaming)
   - [📝 How to run](#-how-to-run)
     - [Step 1: Run the Kafka consumer](#step-1-run-the-kafka-consumer)
     - [Step 2: Submit the Spark Streaming Job](#step-2-submit-the-spark-streaming-job)
@@ -113,7 +113,7 @@ cat ./src/db_schema.sql | docker exec -i postgres psql -U postgres -d postgres
 pip install -r requirements.txt
 ```
 
-## Step 6: Initialize .env file from the root folder
+### Step 6: Initialize .env file from the root folder
 Example of .env file
 ```
 "spark.app.name"=KafkaStreaming
@@ -134,10 +134,10 @@ LOGGING_FILE=logs/kafka_log.log
 LOGGING_TO_CONSOLE=true
 ```
 
-## Step 7: Initialize logs folder from the root folder
+### Step 7: Initialize logs folder from the root folder
 - Create folder named logs including kafka_log.log and streaming.log
 
-## Step 8: Initialize config file for kafka streaming
+### Step 8: Initialize config file for kafka streaming
 - Create folder named environment including config.yml
 - Example:
 ```
