@@ -38,10 +38,12 @@ CREATE TABLE dim_customer (
 );
 
 
+DROP TABLE IF EXISTS dim_date CASCADE;
+
 CREATE TABLE dim_date (
-    date_id VARCHAR(255) PRIMARY KEY,
-    full_date DATE,
-    date_of_week INTEGER,
+    date_id INTEGER PRIMARY KEY,
+    full_date DATE NOT NULL,
+    date_of_week VARCHAR(20), 
     date_of_week_short VARCHAR(10),
     is_weekday_or_weekend VARCHAR(10),
     day_of_month INTEGER,
@@ -49,7 +51,7 @@ CREATE TABLE dim_date (
     week_of_year INTEGER,
     quarter_number INTEGER,
     year_number INTEGER,
-    year_month VARCHAR(7)
+    year_month VARCHAR(10) 
 );
 
 
@@ -59,7 +61,7 @@ CREATE TABLE fact_product_views (
     store_id    VARCHAR(255),
     location_id VARCHAR(255),
     customer_id VARCHAR(255),
-    date_id     VARCHAR(255),
+    date_id     INTEGER,
     ip_address VARCHAR(50),
     time_stamp TIMESTAMP,
     collection VARCHAR(50),
