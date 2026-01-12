@@ -3,8 +3,8 @@ import logging
 import psycopg2
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
-
+from pyspark.sql.functions import from_unixtime, date_format, col
+from pyspark.sql.types import StructType, StructField, StringType, LongType
 
 from streaming.spark_upserter import upsert_date_dimension, upsert_location_dimension, upsert_product_dimension, upsert_store_dimension, upsert_customer_dimension
 from streaming.spark_transformer import store_transformer, customer_transformer, date_transformer
@@ -23,8 +23,8 @@ PG_DB = os.getenv("PG_DB", "postgres")
 PG_USER = os.getenv("PG_USER", "postgres")
 PG_PASS = os.getenv("PG_PASSWORD", "password")
 
-# PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
-PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
+PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
+# PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
 PG_PROPS = {
     "user": PG_USER,
     "password": PG_PASS,
@@ -34,6 +34,17 @@ PG_PROPS = {
 #######################
 # 2. HELPER FUNCTION  #
 #######################  
+spark = SparkSession.builder.getOrCreate()    
+dim_schema = StructType([
+    StructField("map_id", StringType(), True),
+    StructField("map_key", StringType(), True)
+])
+
+def create_df(mapping, id_col_name, key_col_name):
+        data = [(str(k), str(v) if v else None) for k, v in mapping.items()]
+        return spark.createDataFrame(data, schema=dim_schema) \
+                    .withColumnRenamed("map_id", id_col_name) \
+                    .withColumnRenamed("map_key", key_col_name)
 
 def process_batch(batch_df, batch_id):
     if batch_df.isEmpty():
@@ -68,7 +79,7 @@ def process_batch(batch_df, batch_id):
         # Transform and upsert PRODUCT
         if row.product_id and row.product_id not in product_map:
             logging.info("UPSERTING PRODUCT DIMENSION")
-            pk = upsert_product_dimension(conn, "dim_product", "product_id", "product_id", row.product_id)
+            pk = upsert_product_dimension(conn, "dim_product", (row.product_id,))
             product_map[row.product_id] = pk
 
         # Transform and upsert STORE
@@ -76,14 +87,14 @@ def process_batch(batch_df, batch_id):
             store_name = store_transformer(row.store_id)
             store_tuple = (row.store_id, store_name)
             logging.info("UPSERTING STORE DIMENSION")
-            sk = upsert_store_dimension(conn, "dim_store", "store_id", "store_id", None, store_tuple)
+            sk = upsert_store_dimension(conn, "dim_store", store_tuple)
             store_map[row.store_id] = sk
 
         # Transform and upsert LOCATION
         if row.location_id and row.location_id not in location_map:
             loc_tuple = (row.location_id, row.country_name, row.country_short, row.region_name, row.city_name)
             logging.info("UPSERTING LOCATION DIMENSION")
-            lk = upsert_location_dimension(conn, "dim_location", "location_id", "location_id", None, loc_tuple)
+            lk = upsert_location_dimension(conn, "dim_location", loc_tuple)
             location_map[row.location_id] = lk
 
         # Transform and upsert CUSTOMER
@@ -96,7 +107,7 @@ def process_batch(batch_df, batch_id):
                 resolution = row.resolution
             )
 
-            if customer_data.customer_id not in customer_map:
+            if customer_data['customer_id'] not in customer_map:
                 customer_tuple = (
                     customer_data['customer_id'],
                     customer_data['email_address'],
@@ -105,7 +116,7 @@ def process_batch(batch_df, batch_id):
                     customer_data['resolution'],
                 )
                 logging.info("UPSERTING CUSTOMER DIMENSION")
-                ck = upsert_customer_dimension(conn, "dim_customer", "customer_id", "customer_id", None, customer_tuple)
+                ck = upsert_customer_dimension(conn, "dim_customer", customer_tuple)
                 customer_map[customer_data['customer_id']] = ck
 
         # Transform and upsert DATE
@@ -130,35 +141,38 @@ def process_batch(batch_df, batch_id):
                         date_data['year_month']
                     )
                     logging.info("UPSERTING DATE DIMENSION")
-                    upsert_date_dimension(conn, "dim_date", "date_id", None, None, date_tuple)
+                    upsert_date_dimension(conn, "dim_date", date_tuple)
                     date_map[date_id] = date_id
 
     conn.close()
 
-    # Create DataFrames from maps
-    spark = SparkSession.builder.getOrCreate()
-    prod_df = spark.createDataFrame([(k, v) for k, v in product_map.items()], ["product_id", "product_key"])
-    store_df = spark.createDataFrame([(k, v) for k, v in store_map.items()], ["store_id", "store_key"])
-    loc_df = spark.createDataFrame([(k, v) for k, v in location_map.items()], ["loc_id", "loc_key"])
-    cus_df = spark.createDataFrame([(k, v) for k, v in customer_map.items()], ["cus_id", "cus_key"])
-    date_df = spark.createDataFrame([(k, v) for k, v in date_map.items()], ["date_id", "date_key"])
 
-    # Join & Transform
+    # Create DataFrames from maps
+    prod_df  = create_df(product_map, "product_id", "product_key")
+    store_df = create_df(store_map, "store_id", "store_key")
+    loc_df   = create_df(location_map, "loc_id", "loc_key")
+    cus_df   = create_df(customer_map, "cus_id", "cus_key")
+    
+    date_data = [(str(k), str(v) if v else None) for k, v in date_map.items()]
+    date_df = spark.createDataFrame(date_data, schema=dim_schema) \
+                   .withColumnRenamed("map_id", "date_id_str") \
+                   .withColumnRenamed("map_key", "date_key")
+
     enriched_df = batch_df \
-        .join(prod_df, batch_df.product_id == prod_df.product_id, "left") \
-        .join(store_df, batch_df.store_id == store_df.store_id, "left") \
-        .join(loc_df, batch_df.loc_info.location_id == loc_df.loc_id, "left") \
-        .join(cus_df, batch_df.device_id == cus_df.cus_id, "left") \
-        .join(date_df, batch_df.time_stamp.cast("date") == date_df.date_id, "left") \
-        .select(
-            col("product_id"),
-            col("store_id"),
-            col("loc_id"),
-            col("cus_id"),
-            col("date_id"),
-            col("ip").alias("ip_address"),
-            col("time_stamp")
-        )
+    .join(prod_df, batch_df.product_id == prod_df.product_id, "left") \
+    .join(store_df, batch_df.store_id == store_df.store_id, "left") \
+    .join(loc_df, batch_df.loc_info.location_id == loc_df.loc_id, "left") \
+    .join(cus_df, batch_df.device_id == cus_df.cus_id, "left") \
+    .join(date_df, date_format(from_unixtime(col("time_stamp")), "yyyyMMdd") == date_df.date_id_str, "left") \
+    .select(
+        col("product_key").alias("product_id"),
+        col("store_key").alias("store_id"),
+        col("loc_key").alias("location_id"),
+        col("cus_key").alias("customer_id"),
+        col("date_key").cast("integer").alias("date_id"),
+        col("ip").alias("ip_address"),
+        from_unixtime(col("time_stamp")).cast("timestamp").alias("time_stamp"),
+    )
 
     logging.info("UPSERTING FACT PRODUCT VIEW DATA")
     try:
