@@ -123,12 +123,12 @@ services:
                 bootstrap.servers: "kafka-0:9092,kafka-1:9092,kafka-2:9092"
                 security.protocol: SASL_PLAINTEXT
                 sasl.mechanism: PLAIN
-                sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka" password="Kafka@2024";
+                sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka" password="Kafka@2025";
           security:
             default-group: no-roles
             basic-auth:
               - username: admin
-                password: "fe6cb7194870c4c46cff6aba8dae59239436a91639ceb2bc66608a1b80647657"
+                password: "5f85e01cde696636dd3721c58074c982bb2b8372f0222c7d764b746bba65f04e"
                 passwordHash: SHA256
                 groups:
                 - admin
