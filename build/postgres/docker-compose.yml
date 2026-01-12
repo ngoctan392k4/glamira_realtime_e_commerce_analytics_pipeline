@@ -13,7 +13,7 @@ services:
       POSTGRES_DB: "postgres"
       PGDATA: "/var/lib/postgresql/data"
     ports:
-      - "5432:5432"
+      - "5433:5433"
 
   adminer:
     image: "adminer:4.8.1"
