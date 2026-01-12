@@ -19,19 +19,29 @@ def date_transformer(time_stamp):
     if not time_stamp:
         return None
     
-    if isinstance(time_stamp, str):
-        time_stamp = datetime.fromisoformat(time_stamp)
-    
+    if isinstance(time_stamp, (int, float)):
+        if time_stamp > 9999999999:
+            time_stamp = datetime.fromtimestamp(time_stamp / 1000.0)
+        else:
+            time_stamp = datetime.fromtimestamp(time_stamp)
+            
+    elif isinstance(time_stamp, str):
+        try:
+            time_stamp = datetime.fromisoformat(time_stamp)
+        except ValueError:
+            return None
+
     day_of_week_num = time_stamp.weekday()
     is_weekend = day_of_week_num >= 5
     day_of_year = time_stamp.timetuple().tm_yday
     week_of_year = time_stamp.isocalendar()[1]
     quarter_number = (time_stamp.month - 1) // 3 + 1
+    
     day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     day_names_abbr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     
     return {
-        'date_id': time_stamp.strftime('%Y%m%d'),
+        'date_id': int(time_stamp.strftime('%Y%m%d')),
         'full_date': time_stamp.date(),
         'date_of_week': day_names[day_of_week_num],
         'date_of_week_short': day_names_abbr[day_of_week_num],
