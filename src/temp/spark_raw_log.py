@@ -14,14 +14,14 @@ from pyspark.sql.types import (
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "local_product_view")
 
-PG_HOST = os.getenv("PG_HOST", "localhost")
-PG_PORT = os.getenv("PG_PORT", "5432")
-PG_DB = os.getenv("PG_DB", "postgres")
-PG_USER = os.getenv("PG_USER", "postgres")
-PG_PASS = os.getenv("PG_PASSWORD", "tan123")
+PG_HOST = os.getenv("PG_HOST")
+PG_PORT = os.getenv("PG_PORT")
+PG_DB = os.getenv("PG_DB")
+PG_USER = os.getenv("PG_USER")
+PG_PASS = os.getenv("PG_PASSWORD")
 
-# PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
-PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
+PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
+# PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
 
 PG_PROPS = {
     "user": PG_USER,
@@ -106,8 +106,7 @@ if __name__ == "__main__":
 
     spark.sparkContext.setLogLevel("WARN")
 
-    log.info("🚀 Starting Kafka → PostgreSQL RAW streaming")
-
+    log.info("Starting Kafka TO PostgreSQL RAW streaming")
     # Read from Kafka
     raw_stream = (
         spark.readStream
@@ -116,7 +115,6 @@ if __name__ == "__main__":
         .option("subscribe", KAFKA_TOPIC)
         .option("startingOffsets", "latest")
 
-        # 🔴 BẮT BUỘC nếu Kafka có SASL
         .option("kafka.security.protocol", "SASL_PLAINTEXT")
         .option("kafka.sasl.mechanism", "PLAIN")
         .option("kafka.sasl.jaas.config", os.getenv("KAFKA_SASL_JAAS_CONFIG"))
