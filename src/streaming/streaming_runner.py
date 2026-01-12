@@ -15,7 +15,7 @@ from streaming.ip_loc_enricher import get_loc_info
 # 1. CONFIGURATION    #
 #######################
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
-KAFKA_TOPIC = os.getenv("KAFKA_SUBSCRIBE")
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC")
 KAFKA_USER = os.getenv("KAFKA_USER")
 KAFKA_PASS = os.getenv("KAFKA_PASS")
 KAFKA_SECURITY_PROTOCOL = os.getenv("KAFKA_SECURITY_PROTOCOL")
@@ -28,8 +28,8 @@ PG_DB = os.getenv("PG_DB")
 PG_USER = os.getenv("PG_USER")
 PG_PASS = os.getenv("PG_PASSWORD")
 
-# PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
-PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
+PG_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
+# PG_URL = f"jdbc:postgresql://host.docker.internal:5432/{PG_DB}"
 PG_PROPS = {
     "user": PG_USER,
     "password": PG_PASS,
@@ -57,7 +57,7 @@ logging.basicConfig(
 # 2. SCHEMA           #
 #######################
 location_schema = StructType([
-    StructField("loc_id", StringType(), True),
+    StructField("location_id", StringType(), True),
     StructField("country_name", StringType(), True),
     StructField("country_short", StringType(), True),
     StructField("region_name", StringType(), True),
@@ -76,7 +76,9 @@ def get_log_schema():
         StructField("collection", StringType()),
         StructField("current_url", StringType()),
         StructField("device_id", StringType()),
-        StructField("email", StringType()),
+        StructField("user_id_db", StringType()),
+        StructField("resolution", StringType()),      
+        StructField("email_address", StringType()),
         StructField("ip", StringType()),
         StructField("local_time", StringType()),
         StructField("option", ArrayType(option_schema)),
@@ -114,7 +116,7 @@ def main():
         raw_stream \
         .select(from_json(col("value").cast("string"), get_log_schema()).alias("data")) 
         .select("data.*")
-        .withColumn("location_data", ip_loc_enricher(col("ip")))
+        .withColumn("loc_info", ip_loc_enricher(col("ip")))
     )
 
     query = (
