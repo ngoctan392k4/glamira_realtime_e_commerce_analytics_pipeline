@@ -31,12 +31,13 @@ docker run -ti --name kafka-streaming \
 -e PYSPARK_PYTHON='./environment/bin/python' \
 -e KAFKA_BOOTSTRAP_SERVERS='kafka-0:9092,kafka-1:9192,kafka-2:9292' \
 -e KAFKA_SASL_JAAS_CONFIG='org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="@2025";' \
-unigap/spark:3.5 bash -c "(cd /spark/src zip -r /tmp/streaming.zip streaming) &&
+unigap/spark:3.5 bash -c "(cd /spark/src && zip -r /tmp/streaming.zip streaming) &&
 conda env create --file /spark/environment.yml &&
 source ~/miniconda3/bin/activate &&
 conda activate pyspark_conda_env &&
 conda pack -f -o pyspark_conda_env.tar.gz &&
 spark-submit \
+--files hdfs:///user/spark/IP-COUNTRY-REGION-CITY.BIN \
 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.7.2 \
 --conf spark.yarn.dist.archives=pyspark_conda_env.tar.gz#environment \
 --py-files /tmp/streaming.zip \
