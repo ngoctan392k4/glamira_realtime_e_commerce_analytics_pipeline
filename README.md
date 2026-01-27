@@ -18,10 +18,12 @@
     - [Step 6: Initialize .env file from the root folder](#step-6-initialize-env-file-from-the-root-folder)
     - [Step 7: Initialize logs folder from the root folder](#step-7-initialize-logs-folder-from-the-root-folder)
     - [Step 8: Initialize config file for kafka streaming](#step-8-initialize-config-file-for-kafka-streaming)
+    - [Step 7: Put BIN IP2LOC file to HDFS for spark job](#step-7-put-bin-ip2loc-file-to-hdfs-for-spark-job)
   - [📝 How to run](#-how-to-run)
     - [Step 1: Run the Kafka consumer](#step-1-run-the-kafka-consumer)
     - [Step 2: Submit the Spark Streaming Job](#step-2-submit-the-spark-streaming-job)
     - [Step 3: Run and view the Realtime Dashboard](#step-3-run-and-view-the-realtime-dashboard)
+  - [Monitor Database](#monitor-database)
   - [Stop the program](#stop-the-program)
 
 ## ❓ Problem Description
@@ -153,6 +155,26 @@ SASL_PLAIN_USERNAME: "admin"
 SASL_PLAIN_PASSWORD: "admin"
 ```
 
+### Step 7: Put BIN IP2LOC file to HDFS for spark job
+- In the root folder of the project, create folder resources and data
+  ```bash
+    mkdir resources/data
+  ```
+- Put BIN file into data folder 
+- Run the following bash to put BIN file to HDFS
+  ```bash
+    // COPY file into hadoop 
+    docker cp ./resources/data/IP-COUNTRY-REGION-CITY.BIN \
+    hadoop-namenode-1:/tmp/IP-COUNTRY-REGION-CITY.BIN
+
+    // PUT to HDFS
+    docker exec -ti hadoop-namenode-1 bash -c \
+    'hdfs dfs -put /tmp/IP-COUNTRY-REGION-CITY.BIN /user/spark/'
+
+    // CHECK FILE EXIST
+    docker exec -ti hadoop-namenode-1 bash -c 'hdfs dfs -ls /user/spark'
+  ```
+
 ## 📝 How to run
 ### Step 1: Run the Kafka consumer 
 - In a terminal, move to the root folder of the project
@@ -168,9 +190,45 @@ python -m src.kafka_to_kafka
 ### Step 2: Submit the Spark Streaming Job 
 - In another terminal, move to the root folder of the project 
 - The flow including reading log messages from Kafka, performing ETL, enriching IP2locations, and writes to Postgresql.
+```shell
+docker container stop kafka-streaming || true &&
+docker container rm kafka-streaming || true &&
+docker run -ti --name kafka-streaming \
+--env-file ./.env \
+--network=streaming-network \
+-v ./:/spark \
+-v ./hadoop-conf:/spark/hadoop-conf \
+-v spark_lib:/home/spark/.ivy2 \
+-v spark_data:/data \
+-e HADOOP_CONF_DIR=/spark/hadoop-conf/ \
+-e PYSPARK_DRIVER_PYTHON='python' \
+-e PYSPARK_PYTHON='./environment/bin/python' \
+-e KAFKA_BOOTSTRAP_SERVERS='kafka-0:9092,kafka-1:9192,kafka-2:9292' \
+-e KAFKA_SASL_JAAS_CONFIG='org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="@2025";' \
+unigap/spark:3.5 bash -c "(cd /spark/src && zip -r /tmp/streaming.zip streaming) &&
+conda env create --file /spark/environment.yml &&
+source ~/miniconda3/bin/activate &&
+conda activate pyspark_conda_env &&
+conda pack -f -o pyspark_conda_env.tar.gz &&
+spark-submit \
+--files hdfs:///user/spark/IP-COUNTRY-REGION-CITY.BIN \
+--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.7.2 \
+--conf spark.yarn.dist.archives=pyspark_conda_env.tar.gz#environment \
+--py-files /tmp/streaming.zip \
+--deploy-mode client \
+--master yarn \
+/spark/src/__main__.py"
+```
 
 ### Step 3: Run and view the Realtime Dashboard
 - In a new terminal, run the visualization code
+
+## Monitor Database 
+- Access the `adminer` address and enter the `postgres` information (See `environment` in [Docker Compose](./build/postgres/docker-compose.yml)).
+- [adminer](http://localhost:8380)
+**Note:** `Adminer` is just a tool to connect to the database; we can use other tools such as `pgAdmin`, `DBeaver`, etc.
+
+Output Example: [Dimension and Fact tables](./img/)
 
 ## Stop the program
 - Ctrl + C in all terminal to exit the program
