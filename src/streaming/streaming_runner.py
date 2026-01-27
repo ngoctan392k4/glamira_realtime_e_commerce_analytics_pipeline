@@ -40,7 +40,7 @@ LOGGING_LEVEL = os.getenv("LOGGING_LEVEL")
 LOGGING_FILE = os.getenv("LOGGING_FILE")
 LOGGING_TO_CONSOLE = os.getenv("LOGGING_TO_CONSOLE", "false").lower() == "true"
 
-IP2LOC_DB_PATH = "/spark/resources/data/IP2LOCATION-LITE-DB11.BIN"
+IP2LOC_DB_PATH = "IP-COUNTRY-REGION-CITY.BIN"
 CHECKPOINT_PATH = "hdfs://namenode:8020/user/spark/checkpoints/user_log_raw"
 
 logging.basicConfig(
