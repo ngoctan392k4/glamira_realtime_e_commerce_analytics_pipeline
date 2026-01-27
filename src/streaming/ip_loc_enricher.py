@@ -21,8 +21,13 @@ def get_loc_info(ip_address, db_path):
             loc_id = hashlib.md5(loc_string.encode('utf-8')).hexdigest()
 
             return (
-                loc_id, info.country_short, info.country_long, info.region, info.city
+                loc_id,                 
+                info.country_long,      
+                info.country_short,     
+                info.region,            
+                info.city               
             )
+
     except Exception as e:
         logging.error(ip_address, "IS NOT FOUND")
         return None
