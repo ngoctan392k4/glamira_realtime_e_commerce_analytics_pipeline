@@ -1,10 +1,12 @@
 import os
 import logging 
 import psycopg2
+from psycopg2.extras import execute_batch
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_unixtime, date_format, col
 from pyspark.sql.types import StructType, StructField, StringType, LongType
+from pyspark.sql.functions import sha2, concat_ws, col, coalesce, lit
 
 from streaming.spark_upserter import upsert_date_dimension, upsert_location_dimension, upsert_product_dimension, upsert_store_dimension, upsert_customer_dimension
 from streaming.spark_transformer import store_transformer, customer_transformer, date_transformer
@@ -164,7 +166,23 @@ def process_batch(batch_df, batch_id):
     .join(loc_df, batch_df.loc_info.location_id == loc_df.loc_id, "left") \
     .join(cus_df, batch_df.device_id == cus_df.cus_id, "left") \
     .join(date_df, date_format(from_unixtime(col("time_stamp")), "yyyyMMdd") == date_df.date_id_str, "left") \
+    .withColumn(
+        "fact_id",
+        sha2(
+            concat_ws(
+                "_",
+                coalesce(col("product_key"), lit("NA")),
+                coalesce(col("store_key"), lit("NA")),
+                coalesce(col("loc_key"), lit("NA")),
+                coalesce(col("cus_key"), lit("NA")),
+                coalesce(col("date_key"), lit("NA")),
+                col("time_stamp").cast("string")
+            ),
+            256
+        )
+    ) \
     .select(
+        col("fact_id"),
         col("product_key").alias("product_id"),
         col("store_key").alias("store_id"),
         col("loc_key").alias("location_id"),
@@ -175,11 +193,59 @@ def process_batch(batch_df, batch_id):
     )
 
     logging.info("UPSERTING FACT PRODUCT VIEW DATA")
-    try:
-        enriched_df.write \
-            .mode("append") \
-            .jdbc(PG_URL, "fact_product_views", properties=PG_PROPS)
-    except Exception as e:
-        logging.exception(f"WRITING ERROR WITH BATCH {batch_id}: {e}")
+    
+    def upsert_fact_partition(rows):
+        import psycopg2
+        from psycopg2.extras import execute_batch
+
+        conn = psycopg2.connect(
+            host=PG_HOST,
+            port=PG_PORT,
+            database=PG_DB,
+            user=PG_USER,
+            password=PG_PASS
+        )
+        cur = conn.cursor()
+
+        sql = """
+            INSERT INTO fact_product_views (
+                fact_id, product_id, store_id, location_id,
+                customer_id, date_id, ip_address, time_stamp
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (fact_id) DO NOTHING
+        """
+
+        batch = [
+            (
+                r.fact_id,
+                r.product_id,
+                r.store_id,
+                r.location_id,
+                r.customer_id,
+                r.date_id,
+                r.ip_address,
+                r.time_stamp
+            )
+            for r in rows
+        ]
+
+        if batch:
+            execute_batch(cur, sql, batch, page_size=500)
+            conn.commit()
+
+        cur.close()
+        conn.close()
+
+    
+    enriched_df.printSchema()
+    enriched_df.foreachPartition(upsert_fact_partition)
+    
+    # try:
+    #     enriched_df.write \
+    #         .mode("append") \
+    #         .jdbc(PG_URL, "fact_product_views", properties=PG_PROPS)
+    # except Exception as e:
+    #     logging.exception(f"WRITING ERROR WITH BATCH {batch_id}: {e}")
 
     batch_df.unpersist()
