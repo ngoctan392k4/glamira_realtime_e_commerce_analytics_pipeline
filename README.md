@@ -20,6 +20,7 @@
     - [Step 8: Initialize config file for kafka streaming](#step-8-initialize-config-file-for-kafka-streaming)
     - [Step 7: Put BIN IP2LOC file to HDFS for spark job](#step-7-put-bin-ip2loc-file-to-hdfs-for-spark-job)
   - [📝 How to run](#-how-to-run)
+    - [Step 0: Install required dependencies](#step-0-install-required-dependencies)
     - [Step 1: Run the Kafka consumer](#step-1-run-the-kafka-consumer)
     - [Step 2: Submit the Spark Streaming Job](#step-2-submit-the-spark-streaming-job)
     - [Step 3: Run and view the Realtime Dashboard](#step-3-run-and-view-the-realtime-dashboard)
@@ -178,6 +179,15 @@ SASL_PLAIN_PASSWORD: "admin"
   ```
 
 ## 📝 How to run
+### Step 0: Install required dependencies
+- Run the following bash to install: 
+```bash
+python3 -m venv .venv
+
+source .venv/bin/activate
+
+pip install -r requirements.txt
+```
 ### Step 1: Run the Kafka consumer 
 - In a terminal, move to the root folder of the project
 - Run the following terminal command line:
@@ -224,7 +234,10 @@ spark-submit \
 
 ### Step 3: Run and view the Realtime Dashboard
 - In a new terminal, run the visualization code
-
+- Run the following bash for real time dashboard
+```bash
+streamlit run src/report_dashboard/report.py
+```
 ## Monitor Database 
 - Access the `adminer` address and enter the `postgres` information (See `environment` in [Docker Compose](./build/postgres/docker-compose.yml)).
 - [adminer](http://localhost:8380)
