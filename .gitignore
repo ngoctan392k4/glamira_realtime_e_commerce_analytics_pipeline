@@ -4,3 +4,4 @@ __pycache__/
 logs/
 environment/
 resources/
+.github/
