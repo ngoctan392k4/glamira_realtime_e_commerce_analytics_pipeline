@@ -107,6 +107,7 @@ def main():
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP) \
         .option("subscribe", KAFKA_TOPIC) \
         .option("startingOffsets", "latest") \
+        .option("failOnDataLoss", "false") \
         .option("kafka.security.protocol", KAFKA_SECURITY_PROTOCOL) \
         .option("kafka.sasl.mechanism", KAFKA_SASL_MECHANISM) \
         .option("kafka.sasl.jaas.config", KAFKA_SASL_JAAS_CONFIG) \
