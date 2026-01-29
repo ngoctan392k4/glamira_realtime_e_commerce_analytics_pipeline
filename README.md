@@ -238,12 +238,18 @@ spark-submit \
 ```bash
 streamlit run src/report_dashboard/report.py
 ```
+
+**Output Example**: 
+- [Report 1](./img/report_1.png)
+- [Report 2](./img/report_2.png)
+- [Report 3](./img/report_3.png)
 ## Monitor Database 
 - Access the `adminer` address and enter the `postgres` information (See `environment` in [Docker Compose](./build/postgres/docker-compose.yml)).
-- [adminer](http://localhost:8380)
+- [adminer](http://localhost:8380)  
 **Note:** `Adminer` is just a tool to connect to the database; we can use other tools such as `pgAdmin`, `DBeaver`, etc.
 
-Output Example: [Dimension and Fact tables](./img/)
+**Output Example**: 
+- [Dimension and Fact tables](./img/)
 
 ## Stop the program
 - Ctrl + C in all terminal to exit the program
