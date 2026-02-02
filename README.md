@@ -12,13 +12,13 @@
     - [Step 1: Install Hadoop](#step-1-install-hadoop)
     - [Step 2: Install Spark](#step-2-install-spark)
     - [Step 3: Install Kafka](#step-3-install-kafka)
-    - [Step 3: Install Postgresql](#step-3-install-postgresql)
-    - [Step 4: Initialize the Database](#step-4-initialize-the-database)
-    - [Step 5: Install dependencies](#step-5-install-dependencies)
-    - [Step 6: Initialize .env file from the root folder](#step-6-initialize-env-file-from-the-root-folder)
-    - [Step 7: Initialize logs folder from the root folder](#step-7-initialize-logs-folder-from-the-root-folder)
-    - [Step 8: Initialize config file for kafka streaming](#step-8-initialize-config-file-for-kafka-streaming)
-    - [Step 7: Put BIN IP2LOC file to HDFS for spark job](#step-7-put-bin-ip2loc-file-to-hdfs-for-spark-job)
+    - [Step 4: Install Postgresql](#step-4-install-postgresql)
+    - [Step 5: Initialize the Database](#step-5-initialize-the-database)
+    - [Step 6: Install dependencies](#step-6-install-dependencies)
+    - [Step 7: Initialize .env file from the root folder](#step-7-initialize-env-file-from-the-root-folder)
+    - [Step 8: Initialize logs folder from the root folder](#step-8-initialize-logs-folder-from-the-root-folder)
+    - [Step 9: Initialize config file for kafka streaming](#step-9-initialize-config-file-for-kafka-streaming)
+    - [Step 10: Put BIN IP2LOC file to HDFS for spark job](#step-10-put-bin-ip2loc-file-to-hdfs-for-spark-job)
   - [📝 How to run](#-how-to-run)
     - [Step 0: Install required dependencies](#step-0-install-required-dependencies)
     - [Step 1: Run the Kafka consumer](#step-1-run-the-kafka-consumer)
@@ -100,23 +100,23 @@ This problem solves the integration of `Kafka` and `Spark` by utilizing `Spark` 
 - Stand at [Kafka Folder](./build/kafka)
 - See the instruction in [Kafka Installing](./build/kafka/README.md)
 
-### Step 3: Install Postgresql 
+### Step 4: Install Postgresql 
 - Stand at [Postgresql Folder](./build/kafka)
 - See the instruction in [Postgresql Installing](./build/kafka/README.md)
 
-### Step 4: Initialize the Database
+### Step 5: Initialize the Database
 - Execute the SQL script to create Fact table and Dimension tables in PostgreSQL.
 - Run the script below:
 ```bash
 cat ./src/db_schema.sql | docker exec -i postgres psql -U postgres -d postgres
 ```
 
-### Step 5: Install dependencies
+### Step 6: Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 6: Initialize .env file from the root folder
+### Step 7: Initialize .env file from the root folder
 Example of .env file
 ```
 "spark.app.name"=KafkaStreaming
@@ -139,10 +139,10 @@ LOGGING_FILE=logs/kafka_log.log
 LOGGING_TO_CONSOLE=true
 ```
 
-### Step 7: Initialize logs folder from the root folder
+### Step 8: Initialize logs folder from the root folder
 - Create folder named logs including kafka_log.log and streaming.log
 
-### Step 8: Initialize config file for kafka streaming
+### Step 9: Initialize config file for kafka streaming
 - Create folder named environment including config.yml
 - Example:
 ```
@@ -158,7 +158,7 @@ SASL_PLAIN_USERNAME: "admin"
 SASL_PLAIN_PASSWORD: "admin"
 ```
 
-### Step 7: Put BIN IP2LOC file to HDFS for spark job
+### Step 10: Put BIN IP2LOC file to HDFS for spark job
 - In the root folder of the project, create folder resources and data
   ```bash
     mkdir resources/data
