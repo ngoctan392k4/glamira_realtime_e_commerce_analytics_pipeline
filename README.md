@@ -21,9 +21,10 @@
     - [Step 10: Put BIN IP2LOC file to HDFS for spark job](#step-10-put-bin-ip2loc-file-to-hdfs-for-spark-job)
   - [📝 How to run](#-how-to-run)
     - [Step 0: Install required dependencies](#step-0-install-required-dependencies)
-    - [Step 1: Run the Kafka consumer](#step-1-run-the-kafka-consumer)
-    - [Step 2: Submit the Spark Streaming Job](#step-2-submit-the-spark-streaming-job)
-    - [Step 3: Run and view the Realtime Dashboard](#step-3-run-and-view-the-realtime-dashboard)
+    - [Step 3: Health checks for Kafka, Spark](#step-3-health-checks-for-kafka-spark)
+    - [Step 2: Run the Kafka consumer](#step-2-run-the-kafka-consumer)
+    - [Step 3: Submit the Spark Streaming Job](#step-3-submit-the-spark-streaming-job)
+    - [Step 4: Run and view the Realtime Dashboard](#step-4-run-and-view-the-realtime-dashboard)
   - [Monitor Database](#monitor-database)
   - [Stop the program](#stop-the-program)
 
@@ -188,7 +189,11 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
-### Step 1: Run the Kafka consumer 
+
+### Step 3: Health checks for Kafka, Spark
+- Move to [airflow](./airflow/) folder and read README.md to checks connection, availability of Kafka and Spark
+
+### Step 2: Run the Kafka consumer 
 - In a terminal, move to the root folder of the project
 - Run the following terminal command line:
 ```shell
@@ -199,7 +204,7 @@ source ./venv/bin/activate
 python -m src.kafka_to_kafka
 ```
 
-### Step 2: Submit the Spark Streaming Job 
+### Step 3: Submit the Spark Streaming Job 
 - In another terminal, move to the root folder of the project 
 - The flow including reading log messages from Kafka, performing ETL, enriching IP2locations, and writes to Postgresql.
 ```shell
@@ -232,7 +237,7 @@ spark-submit \
 /spark/src/__main__.py"
 ```
 
-### Step 3: Run and view the Realtime Dashboard
+### Step 4: Run and view the Realtime Dashboard
 - In a new terminal, run the visualization code
 - Run the following bash for real time dashboard
 ```bash
